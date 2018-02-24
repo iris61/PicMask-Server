@@ -46,6 +46,7 @@ public class ImageInfo implements Serializable{
    	    stmt.setString(4, image.comment);
    	    stmt.setString(5, image.imageName);
    	    stmt.executeUpdate();
+   	    conn.close();
     }
     
     public static ArrayList<ImageInfo> getMostRecentImages(int num){
@@ -66,6 +67,7 @@ public class ImageInfo implements Serializable{
 	    	    		imageInfo.setImageName(rs2.getString("image_name"));
 	    	    		recentImagesList.add(imageInfo);
 	    	    }
+	    	    conn2.close();
     		}catch(Exception e) {e.printStackTrace();}
     		return recentImagesList;
     }
