@@ -51,12 +51,20 @@ public class FetchRecentImages extends HttpServlet {
 		// TODO Auto-generated method stub
 		
 		int num = Integer.parseInt(request.getParameter("num"));
-		ArrayList<ImageInfo> images = ImageInfo.getMostRecentImages(num);
+		String username = "";
+		ArrayList<ImageInfo> images = new ArrayList<ImageInfo>();
+		try {
+			username = request.getParameter("username");
+		}catch(Exception e){}
+		
+		if(username.length() != 0) {
+			images = ImageInfo.getMyRecentImages(num, username);
+		}else images = ImageInfo.getMostRecentImages(num);
+		
 		//PrintWriter pw = response.getWriter();
 		//Gson gson = new Gson();
         
         JSONArray array=JSONArray.fromObject(images);
-        String temp = new String(array.toString().getBytes());
         //request.setCharacterEncoding("utf-8");
         //response.setContentType("text/JavaScript;charset=utf-8");
         response.setHeader("Content-type", "text/JavaScript;charset=UTF-8");

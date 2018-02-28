@@ -107,7 +107,6 @@ public class UploadProcessedImage extends HttpServlet {
                     String comment = request.getAttribute("comment").toString();
                     String image_name = request.getAttribute("image_name").toString();
                     ImageInfo.insertImageInfo(new ImageInfo(create_user, comment, image_name, create_time));
-                    
                 }  
             }  
         }catch(Exception e){  
