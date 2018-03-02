@@ -45,14 +45,14 @@ public class CommentsServlet extends HttpServlet {
 		// TODO Auto-generated method stub
 		request.setCharacterEncoding("utf-8");  
 		int imageId = Integer.parseInt(request.getParameter("imageId"));
-		int userId = 0;
+		String userName = null;
 		int replyToComment = 0;
 		String content = "";
 		String time = "";
 		int hostComment = 0;
 		ArrayList<CommentsInfo> comments = new ArrayList<CommentsInfo>();
 		try {
-			userId = Integer.parseInt(request.getParameter("userId"));
+			userName = request.getParameter("userName");
 			imageId = Integer.parseInt(request.getParameter("imageId"));
 			replyToComment = Integer.parseInt(request.getParameter("replyToComment"));
 			content = request.getParameter("content");
@@ -63,9 +63,9 @@ public class CommentsServlet extends HttpServlet {
 		}
 		
 		try {
-			if(userId > 0) {
+			if(userName != null) {
 				try {
-					CommentsInfo.insertCommentsInfo(new CommentsInfo(userId, imageId, replyToComment, content, time, hostComment));
+					CommentsInfo.insertCommentsInfo(new CommentsInfo(userName, imageId, replyToComment, content, time, hostComment));
 					
 				}catch(Exception e) {
 					

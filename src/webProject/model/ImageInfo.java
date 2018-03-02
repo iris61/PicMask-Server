@@ -41,19 +41,17 @@ public class ImageInfo implements Serializable{
 	    		String maxid = rs0.getString("maxid");
 	    		if(maxid != null) image_id = Integer.parseInt(rs0.getString("maxid")) + 1;
 	    }
-   	    PreparedStatement stmt = conn.prepareStatement("insert into images values (?, ?, ?, ?, ?, ?, ?)");
+   	    PreparedStatement stmt = conn.prepareStatement("insert into images values (?, ?, ?, ?, ?)");
    	    stmt.setInt(1, image_id);
    	    stmt.setString(2, image.createTime);
    	    stmt.setString(3, image.createUser);
    	    stmt.setString(4, image.comment);
    	    stmt.setString(5, image.imageName);
-   	    stmt.setInt(6, 0);
-   	    stmt.setInt(7, 0);
    	    stmt.executeUpdate();
    	    conn.close();
     }
     
-    public static ArrayList<ImageInfo> getMostRecentImages(int num){
+    public static ArrayList<ImageInfo> getMostRecentImages(int num, String username){
     		ArrayList<ImageInfo> recentImagesList = new ArrayList<ImageInfo>();
     		try {
 	    		Class.forName("com.mysql.jdbc.Driver");
@@ -66,12 +64,23 @@ public class ImageInfo implements Serializable{
 	    	    while(rs2.next()) {
 	    	    		ImageInfo imageInfo = new ImageInfo();
 	    	    		imageInfo.setImageId(rs2.getInt("id"));
-	    	    		imageInfo.setLikes(rs2.getInt("likes"));
 	    	    		imageInfo.setCreateTime(rs2.getString("create_time"));
 	    	    		imageInfo.setCreateUser(rs2.getString("create_user"));
 	    	    		imageInfo.setComment(rs2.getString("comment"));
 	    	    		imageInfo.setImageName(rs2.getString("image_name"));
-	    	    		imageInfo.setSelfLike(rs2.getInt("self_like"));
+	    	    		
+	    	    		PreparedStatement stmtFindLikes = conn2.prepareStatement("select count(username) as likes from userLikeRecord where user_like_image_id = ?");
+	    	    		stmtFindLikes.setInt(1, rs2.getInt("id"));
+	    	       	ResultSet rsFindLikes = stmtFindLikes.executeQuery();
+	    	    		if(rsFindLikes.next()) imageInfo.setLikes(Integer.parseInt(rsFindLikes.getString("likes")));
+	    	    		else imageInfo.setLikes(0);
+	    	    		
+	    	    		PreparedStatement stmtSelfLikes = conn2.prepareStatement("select * from userLikeRecord where user_like_image_id = ? and username = ?");
+	    	    		stmtSelfLikes.setInt(1, rs2.getInt("id"));
+	    	    		stmtSelfLikes.setString(2, username);
+	    	       	ResultSet rsFindSelfLikes= stmtSelfLikes.executeQuery();
+	    	    		if(rsFindSelfLikes.next()) imageInfo.setSelfLike(1);
+	    	    		else imageInfo.setSelfLike(0);
 	    	    		recentImagesList.add(imageInfo);
 	    	    }
 	    	    conn2.close();
@@ -79,7 +88,7 @@ public class ImageInfo implements Serializable{
     		return recentImagesList;
     }
 
-	public static ArrayList<ImageInfo> getMyRecentImages(int num, String username){
+	public static ArrayList<ImageInfo> getMyRecentImages(int num, String me, String username){
 		ArrayList<ImageInfo> myImagesList = new ArrayList<ImageInfo>();
 		try {
 	    		Class.forName("com.mysql.jdbc.Driver");
@@ -93,12 +102,23 @@ public class ImageInfo implements Serializable{
 	    	    while(rs.next()) {
 	    	    		ImageInfo imageInfo = new ImageInfo();
 	    	    		imageInfo.setImageId(rs.getInt("id"));
-	    	    		imageInfo.setLikes(rs.getInt("likes"));
 	    	    		imageInfo.setCreateTime(rs.getString("create_time"));
 	    	    		imageInfo.setCreateUser(rs.getString("create_user"));
 	    	    		imageInfo.setComment(rs.getString("comment"));
 	    	    		imageInfo.setImageName(rs.getString("image_name"));
-	    	    		imageInfo.setSelfLike(rs.getInt("self_like"));
+	    	    		
+	    	    		PreparedStatement stmtFindLikes = conn.prepareStatement("select count(username) as likes from userLikeRecord where user_like_image_id = ?");
+	    	    		stmtFindLikes.setInt(1, rs.getInt("id"));
+	    	       	ResultSet rsFindLikes = stmtFindLikes.executeQuery();
+	    	    		if(rsFindLikes.next()) imageInfo.setLikes(Integer.parseInt(rsFindLikes.getString("likes")));
+	    	    		else imageInfo.setLikes(0);
+	    	    		
+	    	    		PreparedStatement stmtSelfLikes = conn.prepareStatement("select * from userLikeRecord where user_like_image_id = ? and username = ?");
+	    	    		stmtSelfLikes.setInt(1, rs.getInt("id"));
+	    	    		stmtSelfLikes.setString(2, username);
+	    	       	ResultSet rsFindSelfLikes= stmtSelfLikes.executeQuery();
+	    	    		if(rsFindSelfLikes.next()) imageInfo.setSelfLike(1);
+	    	    		else imageInfo.setSelfLike(0);
 	    	    		myImagesList.add(imageInfo);
 	    	    }
 	    	    conn.close();
@@ -106,65 +126,6 @@ public class ImageInfo implements Serializable{
 		return myImagesList;
     }
 	
-	public static boolean addLikeByOthers(int imageId) {
-		try {
-	    		Class.forName("com.mysql.jdbc.Driver");
-	    		Context ctx = new InitialContext();  
-	    		DataSource ds = (DataSource) ctx.lookup("java:comp/env/jndi/mydb");
-	       	Connection conn = ds.getConnection(); 
-	       	PreparedStatement stmt = conn.prepareStatement("update images set likes = likes + 1 where id = ?");
-	       	stmt.setInt(1, imageId);
-	       	stmt.executeUpdate();
-	    	    conn.close();
-	    	    return true;
-		}catch(Exception e) {e.printStackTrace();}
-		return false;
-	}
-	
-	public static boolean addLikeBySelf(int imageId) {
-		try {
-	    		Class.forName("com.mysql.jdbc.Driver");
-	    		Context ctx = new InitialContext();  
-	    		DataSource ds = (DataSource) ctx.lookup("java:comp/env/jndi/mydb");
-	       	Connection conn = ds.getConnection(); 
-	       	PreparedStatement stmt = conn.prepareStatement("update images set likes = likes + 1, self_like = 1 where id = ?");
-	       	stmt.setInt(1, imageId);
-	       	stmt.executeUpdate();
-	    	    conn.close();
-	    	    return true;
-		}catch(Exception e) {e.printStackTrace();}
-		return false;
-	}
-	
-	public static boolean removeLikeByOthers(int imageId) {
-		try {
-	    		Class.forName("com.mysql.jdbc.Driver");
-	    		Context ctx = new InitialContext();  
-	    		DataSource ds = (DataSource) ctx.lookup("java:comp/env/jndi/mydb");
-	       	Connection conn = ds.getConnection(); 
-	       	PreparedStatement stmt = conn.prepareStatement("update images set likes = likes - 1 where id = ?");
-	       	stmt.setInt(1, imageId);
-	       	stmt.executeUpdate();
-	    	    conn.close();
-	    	    return true;
-		}catch(Exception e) {e.printStackTrace();}
-		return false;
-	}
-	
-	public static boolean removeLikeBySelf(int imageId) {
-		try {
-	    		Class.forName("com.mysql.jdbc.Driver");
-	    		Context ctx = new InitialContext();  
-	    		DataSource ds = (DataSource) ctx.lookup("java:comp/env/jndi/mydb");
-	       	Connection conn = ds.getConnection(); 
-	       	PreparedStatement stmt = conn.prepareStatement("update images set likes = likes - 1 and self_like = 0 where id = ?");
-	       	stmt.setInt(1, imageId);
-	       	stmt.executeUpdate();
-	    	    conn.close();
-	    	    return true;
-		}catch(Exception e) {e.printStackTrace();}
-		return false;
-	}
 	
 	public static boolean removeImage(int imageId) {
 		try {
@@ -180,10 +141,24 @@ public class ImageInfo implements Serializable{
 		}catch(Exception e) {e.printStackTrace();}
 		return false;
 	}
-    
-    private void setSelfLike(int selfLike) {
-		this.selfLike = selfLike;
+	
+	public static String findImageName(int imageId) {
+		try {
+	    		Class.forName("com.mysql.jdbc.Driver");
+	    		Context ctx = new InitialContext();  
+	    		DataSource ds = (DataSource) ctx.lookup("java:comp/env/jndi/mydb");
+	       	Connection conn = ds.getConnection(); 
+	       	PreparedStatement stmt = conn.prepareStatement("select image_name from images where id = ?");
+	       	stmt.setInt(1, imageId);
+	       	ResultSet rs= stmt.executeQuery();
+	       	String findImageName = null;
+	    	    if(rs.next()) findImageName = rs.getString("image_name");
+	       	conn.close();
+	    	    return findImageName;
+		}catch(Exception e) {e.printStackTrace();}
+		return null;
 	}
+    
 	
     public void setCreateTime(String create_time) {
     		this.createTime = create_time;
@@ -209,11 +184,15 @@ public class ImageInfo implements Serializable{
 		this.likes = likes;
     }
     
+    public void setSelfLike(int selfLike) {
+    		this.selfLike = selfLike;
+    }
+    
+    public int getSelfLike() {return this.selfLike;}
     public String getImageName() {return this.imageName;}
     public String getCreateUser() {return this.createUser;}
     public String getCreateTime() {return this.createTime;}
     public String getComment() {return this.comment;}
     public int getImageId() {return this.imageId;}
     public int getLikes() {return this.likes;}
-    public int getSelfLike() {return this.selfLike;}
 }

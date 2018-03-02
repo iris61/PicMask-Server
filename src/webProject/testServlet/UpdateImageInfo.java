@@ -1,5 +1,6 @@
 package webProject.testServlet;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.SQLException;
@@ -11,7 +12,9 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import webProject.model.CommentsInfo;
 import webProject.model.ImageInfo;
+import webProject.model.LikesInfo;
 import webProject.model.UserInfo;
 
 /**
@@ -36,21 +39,24 @@ public class UpdateImageInfo extends HttpServlet {
 		// TODO Auto-generated method stub
 		//response.getWriter().append("Served at: ").append(request.getContextPath());
 		String action = request.getParameter("action");
-		int selfAction = 0;
-		try {
-			selfAction = Integer.parseInt(request.getParameter("self")) ;
-		}catch(Exception e) {e.printStackTrace();}
+		String username = request.getParameter("username");
 		
-		int imageId = Integer.parseInt(request.getParameter("imageId"));
-		if (action.equals(new String("addLike"))) {
-			if(selfAction == 1) ImageInfo.addLikeBySelf(imageId);
-			else ImageInfo.removeLikeByOthers(imageId);
-		} else if(action.equals(new String("removeLike"))) {
-			if(selfAction == 1) ImageInfo.removeLikeBySelf(imageId);
-			else ImageInfo.removeImage(imageId);
-		} else if (action.equals(new String("removeImage"))) {
-			ImageInfo.removeImage(imageId);
+		try {
+			int imageId = Integer.parseInt(request.getParameter("imageId"));
+			if (action.equals(new String("toggleLike"))) {
+				LikesInfo.toggleLike(username, imageId);
+			} else if (action.equals(new String("removeImage"))) {
+				CommentsInfo.removeComments(imageId);
+				LikesInfo.removeLikes(imageId);
+				String path = "/Users/yangying/Documents/workspace/webProject/upload";
+				File imageFile = new File(path + "/" + ImageInfo.findImageName(imageId));
+				if (imageFile.exists() && imageFile.isFile()) imageFile.delete();
+				ImageInfo.removeImage(imageId);
+			}
+		}catch(Exception e) {
+			e.printStackTrace();
 		}
+		
 //		PrintWriter pw = response.getWriter();
 //		try {
 //	            response.setContentType("text/html;charset=UTF-8");
