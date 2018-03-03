@@ -44,16 +44,17 @@ public class CommentsServlet extends HttpServlet {
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		// TODO Auto-generated method stub
 		request.setCharacterEncoding("utf-8");  
-		int imageId = Integer.parseInt(request.getParameter("imageId"));
+		int imageId = 0;
 		String userName = null;
 		int replyToComment = 0;
 		String content = "";
 		String time = "";
 		int hostComment = 0;
+		int delComment = 0;
 		ArrayList<CommentsInfo> comments = new ArrayList<CommentsInfo>();
 		try {
-			userName = request.getParameter("userName");
 			imageId = Integer.parseInt(request.getParameter("imageId"));
+			userName = request.getParameter("userName");
 			replyToComment = Integer.parseInt(request.getParameter("replyToComment"));
 			content = request.getParameter("content");
 			time = request.getParameter("time");
@@ -63,14 +64,16 @@ public class CommentsServlet extends HttpServlet {
 		}
 		
 		try {
+			delComment = Integer.parseInt(request.getParameter("delComment"));
+		}catch(Exception e) {e.printStackTrace();}
+		
+		try {
 			if(userName != null) {
-				try {
-					CommentsInfo.insertCommentsInfo(new CommentsInfo(userName, imageId, replyToComment, content, time, hostComment));
-					
-				}catch(Exception e) {
-					
-				}
-			}else {
+				CommentsInfo.insertCommentsInfo(new CommentsInfo(userName, imageId, replyToComment, content, time, hostComment));
+			}else if(delComment > 0){
+				CommentsInfo.removeComment(delComment);
+			}
+			else {
 				comments = (ArrayList<CommentsInfo>) CommentsInfo.getAllCommentsOfImage(imageId);
 				JSONArray array=JSONArray.fromObject(comments);
 		        response.setHeader("Content-type", "text/JavaScript;charset=UTF-8");

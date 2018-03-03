@@ -121,6 +121,17 @@ public class CommentsInfo implements Serializable{
  	    conn.close();
     }
 	
+	static public void removeComment(int commentId) throws NamingException, SQLException, ClassNotFoundException {
+   	 	Class.forName("com.mysql.jdbc.Driver");
+   	 	Context ctx = new InitialContext();  
+   	    DataSource ds = (DataSource) ctx.lookup("java:comp/env/jndi/mydb");  
+   	    Connection conn = ds.getConnection(); 
+   	    PreparedStatement stmt = conn.prepareStatement("delete from comments where comment_id = ?");
+	   	stmt.setInt(1, commentId);
+	    	stmt.executeUpdate();
+ 	    conn.close();
+    }
+	
 	public void setCommentId (int commentId) {this.commentId = commentId; }
 	public void setImageId (int imageId) {this.imageId = imageId; }
 	public void setUserName (String username) {this.username = username; }
